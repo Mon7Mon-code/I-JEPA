@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from encoder import ViT
-from predictor import Predictor
+from .encoder import ViT
+from .predictor import Predictor
 
 class IJEPA(nn.Module):
     def __init__(self, image_size, patch_size, embed_dim, num_heads, mlp_dim, num_layers, momentum, pred_num_layers):
@@ -19,9 +19,12 @@ class IJEPA(nn.Module):
             for i, j in zip(self.target.parameters(), self.context.parameters()):
                 i.data = self.momentum * i.data + (1 - self.momentum) * j.data
     
-    def forward(self, x, mask_indicies):
-        y = self.context(x)
-        y = self.predictor(y, mask_indicies)
+    def forward(self, x, cindex, tindex):
+        y = self.context(x, cindex)
         with torch.no_grad():
             z = self.target(x)
-        return y,z
+        a = []
+        for t in tindex:
+            b = self.predictor(y, cindex, t)
+            a.append(b)
+        return a,z

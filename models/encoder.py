@@ -41,9 +41,11 @@ class ViT(nn.Module):
         self.transform = nn.Sequential(*[TransformerBlock(embed_dim, num_heads, mlp_dim) for _ in range(num_layers)])
         self.norm = nn.LayerNorm(embed_dim)
 
-    def forward(self, x):
+    def forward(self, x, indices=None):
         x = self.patch(x)
         x = self.pos(x)
+        if indices is not None:
+            x = x[:, indices, :]
         x = self.transform(x)
         y = self.norm(x)
         return y

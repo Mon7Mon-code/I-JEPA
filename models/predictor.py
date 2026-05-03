@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from encoder import TransformerBlock
+from .encoder import TransformerBlock
 
 class Predictor(nn.Module):
     def __init__(self, embed_dim, predictor_embed_dim, num_patches, num_layers, num_heads, mlp_dim):
@@ -11,9 +11,9 @@ class Predictor(nn.Module):
         self.norm = nn.LayerNorm(predictor_embed_dim)
         self.output = nn.Linear(predictor_embed_dim, embed_dim)
 
-    def forward(self, x, mask_indices):
+    def forward(self, x, context_indices, mask_indices):
         y = self.input(x)
-        y = y + self.pos_embed[:, :y.shape[1], :]
+        y = y + self.pos_embed[:, context_indices, :] 
         mask_tokens = self.pos_embed[:, mask_indices, :].expand(y.shape[0], -1, -1)
         y = torch.cat([y, mask_tokens], dim=1)
         y = self.norm(self.transform(y))
