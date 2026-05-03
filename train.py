@@ -51,12 +51,6 @@ def main():
     model = IJEPA(hyperparam['image_size'], hyperparam['patch_size'], hyperparam['embed_dim'], hyperparam['num_heads'], hyperparam['mlp_dim'], hyperparam['num_layers'], hyperparam['momentum'], hyperparam['pred_num_layers']).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=hyperparam["base_lr"], weight_decay=hyperparam["weight_decay_start"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=hyperparam["num_epochs"] - hyperparam["warmup_epochs"], eta_min=hyperparam["min_lr"])
-    batch, _ = next(iter(dataloader))
-    train = batch.to(device)
-    cindex, tindex = sample_mask(int(hyperparam['num_patches']**0.5), hyperparam['target_blocks'], hyperparam['target_scale'], hyperparam['context_scale'])
-    cindex = cindex.to(device)
-    tindex = [t.to(device) for t in tindex]
-    pred, target = model(train, cindex, tindex)
     for epoch in range(hyperparam['num_epochs']):
         if epoch < hyperparam['warmup_epochs']:
             lr = hyperparam['base_lr'] + (hyperparam['peak_lr'] - hyperparam['base_lr']) * (epoch / hyperparam['warmup_epochs'])
