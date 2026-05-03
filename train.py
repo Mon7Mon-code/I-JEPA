@@ -51,6 +51,7 @@ def main():
     model = IJEPA(hyperparam['image_size'], hyperparam['patch_size'], hyperparam['embed_dim'], hyperparam['num_heads'], hyperparam['mlp_dim'], hyperparam['num_layers'], hyperparam['momentum'], hyperparam['pred_num_layers']).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=hyperparam["base_lr"], weight_decay=hyperparam["weight_decay_start"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=hyperparam["num_epochs"] - hyperparam["warmup_epochs"], eta_min=hyperparam["min_lr"])
+    scaler = torch.amp.GradScaler('cuda')
     for epoch in range(hyperparam['num_epochs']):
         if epoch < hyperparam['warmup_epochs']:
             lr = hyperparam['base_lr'] + (hyperparam['peak_lr'] - hyperparam['base_lr']) * (epoch / hyperparam['warmup_epochs'])
@@ -68,15 +69,17 @@ def main():
             cindex, tindex = sample_mask(int(hyperparam['num_patches']**0.5), hyperparam['target_blocks'], hyperparam['target_scale'], hyperparam['context_scale'])
             cindex = cindex.to(device)
             tindex = [t.to(device) for t in tindex]
-            pred, target = model(train, cindex, tindex)
             loss = torch.tensor(0.0, device=device)
-            for predb, block_index in zip(pred, tindex):
-                t = nn.functional.layer_norm(target[: ,block_index, :], target[: ,block_index, :].shape[-1:])
-                loss += ((predb - t)**2).sum()
-            loss /= hyperparam['target_blocks']
+            with torch.autocast(device_type='cuda', dtype=torch.float16):
+                pred, target = model(train, cindex, tindex)
+                for predb, block_index in zip(pred, tindex):
+                    t = nn.functional.layer_norm(target[:, block_index, :].float(), target[:, block_index, :].shape[-1:])
+                    loss += ((predb.float() - t)**2).sum()
+                loss /= hyperparam['target_blocks']
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             model.update_target()
             epoch_loss += loss.item()
             num_batches += 1
