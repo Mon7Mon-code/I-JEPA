@@ -52,7 +52,17 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=hyperparam["base_lr"], weight_decay=hyperparam["weight_decay_start"])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=hyperparam["num_epochs"] - hyperparam["warmup_epochs"], eta_min=hyperparam["min_lr"])
     scaler = torch.amp.GradScaler('cuda')
-    for epoch in range(hyperparam['num_epochs']):
+    start_epoch = 0
+    if os.path.exists(hyperparam["checkpoint_dir"]):
+        checkpoints = [f for f in os.listdir(hyperparam["checkpoint_dir"]) if f.endswith('.pt')]
+        if checkpoints:
+            latest = max(checkpoints, key=lambda x: int(x.split('_')[-1].replace('.pt', '')))
+            checkpoint = torch.load(os.path.join(hyperparam["checkpoint_dir"], latest))
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            start_epoch = checkpoint['epoch'] + 1
+            print(f"Resuming from epoch {start_epoch}")
+    for epoch in range(start_epoch, hyperparam['num_epochs']):
         if epoch < hyperparam['warmup_epochs']:
             lr = hyperparam['base_lr'] + (hyperparam['peak_lr'] - hyperparam['base_lr']) * (epoch / hyperparam['warmup_epochs'])
             for group in optimizer.param_groups:
