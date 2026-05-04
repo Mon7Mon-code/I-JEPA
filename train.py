@@ -62,6 +62,9 @@ def main():
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             start_epoch = checkpoint['epoch'] + 1
             print(f"Resuming from epoch {start_epoch}")
+    if start_epoch > hyperparam['warmup_epochs']:
+        for _ in range(start_epoch - hyperparam['warmup_epochs']):
+            scheduler.step()
     for epoch in range(start_epoch, hyperparam['num_epochs']):
         if epoch < hyperparam['warmup_epochs']:
             lr = hyperparam['base_lr'] + (hyperparam['peak_lr'] - hyperparam['base_lr']) * (epoch / hyperparam['warmup_epochs'])
@@ -69,11 +72,9 @@ def main():
                 group['lr'] = lr
         else:
             scheduler.step()
-        for group in optimizer.param_groups:
-            group['weight_decay'] = hyperparam['weight_decay_start'] + (hyperparam['weight_decay_end'] - hyperparam['weight_decay_start']) * (epoch / hyperparam['num_epochs'])
-        
         epoch_loss = 0.0
         num_batches = 0
+        
         for batch, _ in dataloader:
             train = batch.to(device)
             cindex, tindex = sample_mask(int(hyperparam['num_patches']**0.5), hyperparam['target_blocks'], hyperparam['target_scale'], hyperparam['context_scale'])
@@ -93,6 +94,8 @@ def main():
             model.update_target()
             epoch_loss += loss.item()
             num_batches += 1
+        for group in optimizer.param_groups:
+            group['weight_decay'] = hyperparam['weight_decay_start'] + (hyperparam['weight_decay_end'] - hyperparam['weight_decay_start']) * (epoch / hyperparam['num_epochs'])
         if epoch % hyperparam['save_every'] == 0:
             torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'loss': loss,}, f"{hyperparam['checkpoint_dir']}/checkpoint_epoch_{epoch}.pt")
         print(f"Epoch {epoch}/{hyperparam['num_epochs']} | Loss: {epoch_loss/num_batches:.4f} | LR: {optimizer.param_groups[0]['lr']:.2e}")
