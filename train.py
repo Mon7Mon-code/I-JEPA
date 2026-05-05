@@ -95,9 +95,15 @@ def main():
             epoch_loss += loss.item()
             num_batches += 1
         if epoch % hyperparam['save_every'] == 0:
-            torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'scheduler_state_dict': scheduler.state_dict(), 'loss': loss}, f"{hyperparam['checkpoint_dir']}/checkpoint_epoch_{epoch}.pt")
+            torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(), 'scheduler_state_dict': scheduler.state_dict(), 'loss': epoch_loss / num_batches}, f"{hyperparam['checkpoint_dir']}/checkpoint_epoch_{epoch}.pt")
         print(f"Epoch {epoch}/{hyperparam['num_epochs']} | Loss: {epoch_loss/num_batches:.4f} | LR: {optimizer.param_groups[0]['lr']:.2e}")
-
+    torch.save({
+        'epoch': 99,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'scheduler_state_dict': scheduler.state_dict(),
+        'loss': epoch_loss / num_batches
+    }, f"{hyperparam['checkpoint_dir']}/checkpoint_epoch_99.pt")
 
 if __name__ == "__main__":
     main()
