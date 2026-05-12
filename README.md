@@ -22,7 +22,7 @@ Due to hardware constraints (1 RTX 3060 Ti 8GB), I made changes to the original 
 
 Despite these initial changes, a single epoch still took over half an hour to complete. Hence, I implemented FP16 mixed precision training instead of BF16 in order to speed up training, while having a negligible decrease in the model's performance.
 
-A bug to note that affected the implementation is that I didn't code the EMA momentumn value annealing to 1.0; instead it's fixed at 0.996.
+A bug to note that affected the implementation is that I didn't code the EMA momentum value annealing to 1.0; instead it's fixed at 0.996.
 
 ## Results
 As in the paper, I evaluated the model using a linear probe to predict the labels of images within the STL-10 dataset. The training setup for the probe consists of:
