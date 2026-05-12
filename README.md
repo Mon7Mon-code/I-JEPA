@@ -24,13 +24,15 @@ Despite these initial changes, a single epoch still took over half an hour to co
 
 A bug to note that affected the implementation is that I didn't code the EMA momentum value annealing to 1.0; instead it's fixed at 0.996.
 
+Another issue that came up during training was that the original checkpoint code in train.py was bugged, hence leading me to restarting training from the beginning.
+
 ## Results
 As in the paper, I evaluated the model using a linear probe to predict the labels of images within the STL-10 dataset. The training setup for the probe consists of:
   - **Loss Function**: Cross Entropy Loss
   - **Optimiser**: SGD (Momentum: 0.9, Weight Decay: 0.0, Batch size: 64, Epochs: 50)
   - **LR Scheduler**: LR decays by 0.1 every 15 epochs
 
-From testing, the best performance I obtained before plateauing was with an initial learning rate of 0.4. The accuracy of the linear probe was **61.59%** with this learning rate. Compared to the paper, it's lower but it still suggests that the model has learned significant semantic representations of the images despite a significantly smaller dataset than ImageNet 1.2M. This is as the accuracy is around 6 times greater than the random baseline of 10% for choosing the correct class.
+From testing, the best performance I obtained before plateauing was with an initial learning rate of 0.4. The accuracy of the linear probe was **61.59%** with this learning rate. Compared to the paper, it's lower but it still suggests that the model has learned significant semantic representations of the images despite a significantly smaller dataset than ImageNet 1.2M. This is shown by the accuracy being around 6 times greater than the random baseline of 10% for choosing the correct class.
 
 Something to take note of, normalisation of the representation vector consistently hurt the accuracy of the probe. It suggests that in this model, the magnitude of the embeddings matter as much as its directions in embedding space in representing images. This is expected to be seen in models which haven't been able to encode representations fully using directions in embedding space due to undertraining.
 
