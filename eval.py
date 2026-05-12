@@ -20,7 +20,7 @@ hyperparam = {
     "num_classes": 10,
     "batch_size": 64,
     "num_epochs": 50,
-    "lr": 0.01,
+    "lr": 0.4,
     "weight_decay": 0.0,
     "step_size": 15,
     "gamma": 0.1,
