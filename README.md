@@ -37,7 +37,7 @@ From testing, the best performance I obtained before plateauing was with an init
 Something to take note of, normalisation of the representation vector consistently hurt the accuracy of the probe. It suggests that in this model, the magnitude of the embeddings matter as much as its directions in embedding space in representing images. This is expected to be seen in models which haven't been able to encode representations fully using directions in embedding space due to undertraining.
 
 ## Usage
-I used Visual Studio Code to create and run this model.
+I used Visual Studio Code with Python 3.12 to create and run this model.
 
 1. Run `pip install torch torchvision` in the terminal
 2. Run train.py (This will run for 100 epochs and have checkpoints every 10 epochs. Progress is printed in terminal)
